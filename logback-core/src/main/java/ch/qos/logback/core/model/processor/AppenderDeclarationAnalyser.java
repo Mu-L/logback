@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * The AppenderAvailabilityAnalyser class is responsible for analyzing the availability
+ * The AppenderDeclarationAnalyser class is responsible for analyzing the availability
  * of appenders. By available, we mean whether an appender with a given name is declared
  * somewhere in the configuration. This availability information is later used by
  * AppenderRefModelHandler to attempt to attach only those appenders that were previously
@@ -47,9 +47,11 @@ public class AppenderDeclarationAnalyser extends ModelHandlerBase {
     @Override
     public void handle(ModelInterpretationContext mic, Model model) throws ModelHandlerException {
         AppenderModel appenderModel = (AppenderModel) model;
-        String appenderName = mic.subst(appenderModel.getName());
 
-        addAppenderDeclaration(mic, appenderName);
+        String originalAppenderName = appenderModel.getName();
+        String substAppenderName = mic.subst(originalAppenderName);
+
+        addAppenderDeclaration(mic, substAppenderName);
     }
 
 
