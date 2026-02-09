@@ -48,7 +48,7 @@ public class AppenderRefDependencyAnalyser extends ModelHandlerBase {
 
         for (AppenderRefModel appenderRefModel : appenderRefModelList) {
             // TODO: prevent substitution of references
-            String ref = appenderRefModel.getRef();
+            String ref = mic.subst(appenderRefModel.getRef());
             DependencyDefinition dd = new DependencyDefinition(parentModel, ref);
             mic.addDependencyDefinition(dd);
         }

@@ -179,12 +179,11 @@ public class JoranConfiguratorTest {
         configure(ClassicTestConstants.JORAN_INPUT_PREFIX + "appenderRefByProperty.xml");
         final Logger logger = loggerContext.getLogger("ch.qos.logback.classic.joran");
         final ListAppender<ILoggingEvent> listAppender = (ListAppender<ILoggingEvent>) logger.getAppender("A");
-        // appender names or refs not subject to substitution
-        assertNull(listAppender);
+        assertEquals(0, listAppender.list.size());
 
         final String msg = "hello world";
         logger.info(msg);
-
+        assertEquals(1, listAppender.list.size());
         System.clearProperty(propertyName);
     }
 
@@ -194,8 +193,11 @@ public class JoranConfiguratorTest {
         configure(ClassicTestConstants.JORAN_INPUT_PREFIX + "appenderRefByPropertyDefault.xml");
         final Logger logger = loggerContext.getLogger("ch.qos.logback.classic.joran");
         final ListAppender<ILoggingEvent> listAppender = (ListAppender<ILoggingEvent>) root.getAppender("A");
-        // appender names not subjected to substitution
-        assertNull(listAppender);
+        assertNotNull(listAppender);
+        assertEquals(0, listAppender.list.size());
+        final String msg = "hello world";
+        logger.info(msg);
+        assertEquals(1, listAppender.list.size());
 
     }
 
@@ -226,15 +228,14 @@ public class JoranConfiguratorTest {
         final NOPAppender<ILoggingEvent> nopAppender = (NOPAppender) root.getAppender("NOP");
 
         assertNotNull(listAppender);
-        assertNull(nopAppender);
+        assertNotNull(nopAppender);
 
         assertEquals(0, listAppender.list.size());
         final String msg = "hello world";
         logger.info(msg);
 
         assertEquals(1, listAppender.list.size());
-
-        checker.assertContainsMatch("Appender named \\[\\$\\{NONEXISTENT:-NOP\\}\\] could not be found.");
+        checker.assertIsWarningOrErrorFree();
     }
 
     @Test

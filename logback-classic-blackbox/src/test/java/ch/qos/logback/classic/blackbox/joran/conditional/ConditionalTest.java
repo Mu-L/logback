@@ -205,6 +205,16 @@ public class ConditionalTest {
         checker.isWarningOrErrorFree(0);
     }
 
+    @Test
+    public void issues1017() throws JoranException {
+        System.setProperty("keyIssues1017", "true");
+        configure(BlackboxClassicTestConstants.JORAN_INPUT_PREFIX + "conditional/issues1017.xml");
+        statusPrinter2.print(loggerContext);
+        String msg = "issues1017";
+        logger.debug(msg);
+        Appender<ILoggingEvent> appender = root.getAppender("LIST");
+        assertNotNull(appender);
+    }
 
 
 }
