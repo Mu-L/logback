@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 
 import ch.qos.logback.core.net.SocketConnector.ExceptionHandler;
-import ch.qos.logback.core.net.server.test.ServerSocketUtil;
 import ch.qos.logback.core.testUtil.EnvUtilForTests;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;

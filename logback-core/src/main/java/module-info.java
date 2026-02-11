@@ -52,7 +52,6 @@ module ch.qos.logback.core {
     exports ch.qos.logback.core.model.util;
 
     exports ch.qos.logback.core.net;
-    exports ch.qos.logback.core.net.server;
     exports ch.qos.logback.core.net.ssl;
 
     exports ch.qos.logback.core.pattern;
