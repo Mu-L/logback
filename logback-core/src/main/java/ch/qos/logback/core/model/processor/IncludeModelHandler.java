@@ -62,8 +62,6 @@ public class IncludeModelHandler extends ResourceHandlerBase {
     public void handle(ModelInterpretationContext mic, Model model) throws ModelHandlerException {
         IncludeModel includeModel = (IncludeModel) model;
 
-        System.out.println("==============================IncludeModelHandler.handle");
-
         URL topURL = mic.getTopURL();
         Boolean topScan = mic.getTopScanBoolean();
         Model modelFromIncludedFile = buildModelFromIncludedFile(mic, topURL, topScan, includeModel);

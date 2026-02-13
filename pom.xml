@@ -43,6 +43,7 @@
     <module>logback-core</module>
     <module>logback-core-blackbox</module>
     <module>logback-classic</module>
+      <module>logback-classic-misc</module>
     <module>logback-classic-blackbox</module>
     <module>logback-access</module>
     <module>logback-examples</module>
@@ -177,6 +178,11 @@
         <artifactId>logback-classic</artifactId>
         <version>${project.version}</version>
       </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic-misc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -460,7 +466,7 @@
          <extensions>true</extensions>
          <configuration>
            <publishingServerId>central</publishingServerId>
-           <excludeArtifacts>logback-core-blackbox,logback-classic-blackbox,logback-examples</excludeArtifacts>
+           <excludeArtifacts>logback-core-blackbox,logback-classic-misc,logback-classic-blackbox,logback-examples</excludeArtifacts>
          </configuration>
        </plugin>
 

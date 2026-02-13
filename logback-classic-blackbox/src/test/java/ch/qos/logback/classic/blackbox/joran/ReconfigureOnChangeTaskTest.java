@@ -71,7 +71,7 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
 
     private static final String SCAN_PERIOD_DEFAULT_FILE_AS_STR = JORAN_INPUT_PREFIX + "roct/scan_period_default.xml";
 
-    private static final String TOP_FILE_WITH_INCLUSION = "asResource/topWithFileInclusion.xml";
+    private static final String TOP_FILE_WITH_INCLUSION = "misc/topWithFileInclusion.xml";
 
     Logger logger = loggerContext.getLogger(this.getClass());
     StatusChecker statusChecker = new StatusChecker(loggerContext);
@@ -160,7 +160,7 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         String propertiesFileStr = CoreTestConstants.OUTPUT_DIR_PREFIX + "roct-" + diff + ".properties";
         File propertiesFile = new File(propertiesFileStr);
         String configurationStr = "<configuration debug=\"true\" scan=\"true\" scanPeriod=\"10 millisecond\"><propertiesConfigurator file=\"" + propertiesFileStr + "\"/></configuration>";
-        writeToFile(propertiesFile, PropertiesConfigurator.LOGBACK_LOGGER_PREFIX + loggerName+"=INFO");
+        writeToFile(propertiesFile, PropertiesConfigurator.LOGBACK_LOGGER_PREFIX + loggerName + "=INFO");
         configure(asBAIS(configurationStr));
         Logger abcLogger = loggerContext.getLogger(loggerName);
         assertEquals(Level.INFO, abcLogger.getLevel());
@@ -168,14 +168,14 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         CountDownLatch changeDetectedLatch0 = registerChangeDetectedListener();
         CountDownLatch configurationDoneLatch0 = registerPartialConfigurationEndedSuccessfullyEventListener();
 
-        writeToFile(propertiesFile, PropertiesConfigurator.LOGBACK_LOGGER_PREFIX + loggerName+"=WARN");
+        writeToFile(propertiesFile, PropertiesConfigurator.LOGBACK_LOGGER_PREFIX + loggerName + "=WARN");
         changeDetectedLatch0.await();
         configurationDoneLatch0.await();
         assertEquals(Level.WARN, abcLogger.getLevel());
 
         CountDownLatch changeDetectedLatch1 = registerChangeDetectedListener();
         CountDownLatch configurationDoneLatch1 = registerPartialConfigurationEndedSuccessfullyEventListener();
-        writeToFile(propertiesFile, PropertiesConfigurator.LOGBACK_LOGGER_PREFIX + loggerName+"=ERROR");
+        writeToFile(propertiesFile, PropertiesConfigurator.LOGBACK_LOGGER_PREFIX + loggerName + "=ERROR");
         changeDetectedLatch1.await();
         configurationDoneLatch1.await();
 
@@ -268,7 +268,7 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
 
     private void addResetResistantOnConsoleStatusListener() {
         // enable when debugging
-        if(1!=1)
+        if (1 == 1)
             return;
         OnConsoleStatusListener ocs = new OnConsoleStatusListener();
         ocs.setContext(loggerContext);
@@ -279,38 +279,40 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
 
     @Test
     @Timeout(value = 2, unit = TimeUnit.SECONDS)
-    public void XXXscanWithIncludedFileCreatedLater() throws IOException, JoranException, InterruptedException {
-        ReconfigurationTaskRegisteredConfigEventListener roctRegisteredListener = new ReconfigurationTaskRegisteredConfigEventListener();
-        loggerContext.addConfigurationEventListener(roctRegisteredListener);
-        addResetResistantOnConsoleStatusListener();
-        String innerFileAsStr = CoreTestConstants.OUTPUT_DIR_PREFIX + "scanWithIncludedFileCreatedLater-" + diff + ".xml";
-        System.setProperty("fileCreatedLater", innerFileAsStr);
-        configureAsResource(TOP_FILE_WITH_INCLUSION);
+    public void scanWithIncludedFileCreatedLater() throws IOException, JoranException, InterruptedException {
 
-        File innerFile = new File(innerFileAsStr);
+        try {
+            ReconfigurationTaskRegisteredConfigEventListener roctRegisteredListener = new ReconfigurationTaskRegisteredConfigEventListener();
+            loggerContext.addConfigurationEventListener(roctRegisteredListener);
+            addResetResistantOnConsoleStatusListener();
+            String innerFileAsStr = CoreTestConstants.OUTPUT_DIR_PREFIX + "scanWithIncludedFileCreatedLater-" + diff + ".xml";
+            System.setProperty("fileCreatedLater", innerFileAsStr);
+            configureAsResource(TOP_FILE_WITH_INCLUSION);
 
-        List<File> fileList = getConfigurationWatchList(loggerContext);
-        assertThatListContainsFile(fileList, innerFile);
+            if(isSurefire()) {
+                statusChecker.assertContainsMatch("URL \\[.*\\] is not of type file");
+            }
 
-        // capture reference to ReconfigureOnChangeTask
-        //ReconfigureOnChangeTask roct = roctRegisteredListener.reconfigureOnChangeTask;
-        //assertNotNull(roct);
+            File innerFile = new File(innerFileAsStr);
 
-        CountDownLatch changeDetectedLatch = registerChangeDetectedListener();
-        CountDownLatch configurationDoneLatch = registerNewReconfigurationDoneSuccessfullyListener();
+            List<File> fileList = getConfigurationWatchList(loggerContext);
+            assertThatListContainsFile(fileList, innerFile);
 
+            CountDownLatch changeDetectedLatch = registerChangeDetectedListener();
+            CountDownLatch configurationDoneLatch = registerNewReconfigurationDoneSuccessfullyListener();
 
-        writeToFile(innerFile, "<included><root level=\"ERROR\"/></included> ");
-        changeDetectedLatch.await();
-        configurationDoneLatch.await();
+            writeToFile(innerFile, "<included><root level=\"ERROR\"/></included> ");
+            changeDetectedLatch.await();
+            configurationDoneLatch.await();
 
-        //Thread.sleep(1000);
-        //waitForReconfigureOnChangeTaskToRun();
+            //statusPrinter2.print(loggerContext);
+            Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+            assertEquals(Level.ERROR, root.getLevel());
 
-        //statusPrinter2.print(loggerContext);
-        Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-        assertEquals(Level.ERROR, root.getLevel());
-
+            //System.getProperties().forEach((k,v)->System.out.println(k+"="+v));
+        } finally {
+            System.getProperties().remove("fileCreatedLater");
+        }
     }
 
 
@@ -321,13 +323,14 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         String innerFileAsStr = CoreTestConstants.OUTPUT_DIR_PREFIX + "reconfigureOnChangeConfig_inner-" + diff + ".xml";
         File topLevelFile = new File(topLevelFileAsStr);
         writeToFile(topLevelFile,
-                        "<configuration xdebug=\"true\" scan=\"true\" scanPeriod=\"5 millisecond\"><include file=\"" + innerFileAsStr + "\"/></configuration> ");
+                "<configuration xdebug=\"true\" scan=\"true\" scanPeriod=\"5 millisecond\"><include file=\"" + innerFileAsStr + "\"/></configuration> ");
 
         File innerFile = new File(innerFileAsStr);
         writeToFile(innerFile, "<included><root level=\"ERROR\"/></included> ");
         addResetResistantOnConsoleStatusListener();
 
         configure(topLevelFile);
+
 
 
         CountDownLatch changeDetectedLatch = registerChangeDetectedListener();
@@ -360,6 +363,16 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         ReconfigurationDoneListener reconfigurationDoneListener = new ReconfigurationDoneListener(latch);
         loggerContext.addConfigurationEventListener(reconfigurationDoneListener);
         return latch;
+    }
+
+    boolean isSurefire() {
+        if(System.getProperty("surefire.test.class.path") != null) {
+            return true;
+        }
+        if(System.getProperty("surefire.real.class.path") != null) {
+            return true;
+        }
+        return false;
     }
 
     static class RunMethodInvokedListener implements ConfigurationEventListener {
