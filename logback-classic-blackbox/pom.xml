@@ -112,7 +112,7 @@
                             <useModulePath>true</useModulePath>
 
                             <excludes>
-                                <exclude>ch.qos.logback.classic.blackbox.VersionCheckTest</exclude>
+                                <exclude>ch.qos.logback.classic.blackbox.WithOlderCoreVersionCheckTest</exclude>
                             </excludes>
                         </configuration>
                     </execution>
@@ -125,7 +125,7 @@
     <profiles>
         <!--
         cd logback-classic-blackbox
-        mvn test -P older-core -Dtest=ch.qos.logback.classic.blackbox.VersionCheckTest
+        mvn test -P older-core -Dtest=ch.qos.logback.classic.blackbox.WithOlderCoreVersionCheckTest
         -->
         <profile>
             <id>older-core</id>
@@ -158,7 +158,7 @@
                                     <reportFormat>plain</reportFormat>
                                     <disableXmlReport>true</disableXmlReport>
                                     <includes>
-                                        <include>ch.qos.logback.classic.blackbox.VersionCheckTest</include>
+                                        <include>ch.qos.logback.classic.blackbox.WithOlderCoreVersionCheckTest</include>
                                     </includes>
                                     <excludes>
                                         <exclude>**/*Xest.java</exclude>

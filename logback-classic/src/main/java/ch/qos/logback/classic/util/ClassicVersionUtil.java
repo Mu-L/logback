@@ -30,6 +30,11 @@ import java.util.Properties;
  */
 public class ClassicVersionUtil {
 
+    static String CLASSIC_MODULE_NAME = "logback-classic";
+    static String CLASSIC_MODULE_VERSION_PROPERTIES_FILE = CLASSIC_MODULE_NAME + "-version.properties";
+    static String CLASSIC_MODULE_VERSION_PROPERTY_KEY = CLASSIC_MODULE_NAME + "-version";
+
+
     // Code copied from VersionUtil. It must be located in the encompassing module and cannot be
     // shared.
     //
@@ -61,13 +66,28 @@ public class ClassicVersionUtil {
      * The method looks for a properties file named "logback-classic-version.properties" within the classpath,
      * reads its contents, and fetches the value associated with the "logback-classic-version" key.
      *
+     * <p>Note that the Class.getResourceAsStream() method checks that the resource is open to the
+     * caller. This entails that the caller must be in the same module as the properties file.
+     * </p>
+     *
      * @return the version string of the "logback-classic" module if found, or null if the properties file or version
      *         key is not present or an error occurs while reading the properties file.
      *
      * @since 1.5.26
      */
     static public String getVersionBySelfDeclaredProperties() {
-        return getVersionBySelfDeclaredProperties(ClassicConstants.class, "logback-classic");
+        Properties props = new Properties();
+
+        try (InputStream is = ClassicConstants.class.getResourceAsStream(CLASSIC_MODULE_VERSION_PROPERTIES_FILE)) {
+            if (is != null) {
+                props.load(is);
+                return props.getProperty(CLASSIC_MODULE_VERSION_PROPERTY_KEY);
+            } else {
+                return null;
+            }
+        } catch (IOException e) {
+            return null;
+        }
     }
 
 }

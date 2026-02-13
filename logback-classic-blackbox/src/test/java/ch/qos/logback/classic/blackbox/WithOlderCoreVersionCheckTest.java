@@ -22,10 +22,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * The VersionCheckTest class is designed to perform a validation test
+ * The WithOlderCoreVersionCheckTest class is designed to perform a validation test
  * on the compatibility of version dependencies, specifically focusing
  * on the interaction between "logback-classic" and "logback-core" libraries.
  *
@@ -36,47 +37,25 @@ import static org.junit.jupiter.api.Assertions.fail;
  * <p>Use the following command to run this test
  * </p>
  *
- * <pre>  cd logback-classic-blackbox;
- * mvn test -P older-core -Dtest=ch.qos.logback.classic.blackbox.VersionCheckTest
+ * <pre>  mvn install;  # ensure up to date compilation
+ * cd logback-classic-blackbox;
+ * mvn test -P older-core -Dtest=ch.qos.logback.classic.blackbox.WithOlderCoreVersionCheckTest
  * </pre>
  *
  * @since 1.5.25
  */
 
-public class VersionCheckTest {
+public class WithOlderCoreVersionCheckTest {
 
 
-    // WARNING: do not add other tests to this file
+    // WARNING: do not add other tests to this file without careful consideration
 
     LoggerContext loggerContext = new LoggerContext();
 
-    /**
-     *
-     * Assertions:
-     * 1. Verifies that the "olderCore" property matches the expected value "1.5.20".
-     * 2. Ensures that a {@link NoClassDefFoundError} is thrown in presence of logback-core version
-     * 1.5.25 or older.
-     */
     @Test
-    @Disabled
-    public void versionTest() {
+    public void olderCoreVersionTest() {
         String olderCoreVersion = System.getProperty("olderCore", "none");
-        //assertEquals("1.5.20", olderCoreVersion);
-        assertEquals("1.5.25", olderCoreVersion);
-        try {
-            VersionUtil.checkForVersionEquality(loggerContext, this.getClass(), CoreConstants.class, "logback-classic", "logback-core");
-            fail("Expected NoClassDefFoundError");
-        } catch (NoClassDefFoundError e) {
-            // logback-core version is older than 1.5.25
-            System.out.println("Got expected NoClassDefFoundError.");
-        }
-    }
-
-    @Test
-    public void otherVersionTest() {
-        String olderCoreVersion = System.getProperty("olderCore", "none");
-        //assertEquals("1.5.20", olderCoreVersion);
-        assertEquals("1.5.25", olderCoreVersion);
+        assertTrue(olderCoreVersion.startsWith("1.5"));
         try {
             CoreVersionUtil.getCoreVersionBySelfDeclaredProperties();
             fail("Expected Error");
@@ -92,6 +71,6 @@ public class VersionCheckTest {
 
 
 
-    // WARNING: do not add other tests to this file
+    // WARNING: do not add other tests to this file without careful consideration
 
 }

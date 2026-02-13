@@ -43,6 +43,22 @@ import static ch.qos.logback.core.CoreConstants.NA;
 public class VersionUtil {
 
     /**
+     * @since 1.5.30
+     */
+    Context context;
+
+    /**
+     * Instance methods allow for polymorphism, static methods do not.
+     *
+     *
+     * @param context
+     * @since 1.5.30
+     */
+    protected VersionUtil(Context context) {
+        this.context = context;
+    }
+
+    /**
      * Retrieves the version of an artifact, such as logback-core.jar, logback-access-common.jar etc.
      *
      * <p>The aClass parameter is assumed to be part of the artifact.
@@ -97,76 +113,24 @@ public class VersionUtil {
         return opt.orElse(null);
     }
 
-    /**
-     * Retrieves the version of a module using a properties file associated with the module.
-     *
-     * <p>Unfortunately, this code cannot be called by other modules. It needs to be duplicated.</p>
-     *
-     * <p>The method looks for a properties file with a name derived from the <code>moduleName</code> parameter,
-     * in the same location, e.g. package, as the <code>aClass</code> parameter. It attempts to load the properties file
-     * and fetch the version information using a specific key.
-     * </p>
-     *
-     * <p>The properties file is expected to be in the same package as the class provided, and named
-     * <code>moduleName-version.properties</code>. The properties file should contain a single key-value pair,
-     * where the key is <code>moduleName-version</code>, and the value is the module version.
-     *
-     * @param aClass     the class used to locate the resource file, the properties file is expected to be in the same package
-     * @param moduleName the name of the module, which is used to construct the properties file name and the key
-     * @return the version of the module as a string, or null if the version cannot be determined
-     * @since 1.5.26
-     * @deprecated (this code cannot be shared and is useless here)
-     */
-    static public String getArtifactVersionBySelfDeclaredProperties(Class<?> aClass, String moduleName) {
-        Properties props = new Properties();
-        // example propertiesFileName: logback-core-version.properties
-        //
-        String propertiesFileName = moduleName + "-version.properties";
-        String propertyKey = moduleName + "-version";
-        try (InputStream is = aClass.getResourceAsStream(propertiesFileName)) {
-            if (is != null) {
-                props.load(is);
-                return props.getProperty(propertyKey);
-            } else {
-                return null;
-            }
-        } catch (IOException e) {
-            return null;
-        }
+   protected String getExpectedVersionOfDependencyByProperties(Class<?> dependerClass, String propertiesFileName, String dependencyNameAsKey) {
+        // derived classes should override
+        return null;
     }
 
 
-
-
-    static String getExpectedVersionOfDependencyByProperties(Class<?> dependerClass, String propertiesFileName, String dependencyNameAsKey) {
-        Properties props = new Properties();
-        // propertiesFileName : logback-access-common-dependencies.properties
-        try (InputStream is = dependerClass.getClassLoader()
-                .getResourceAsStream(propertiesFileName)) {
-            if (is != null) {
-                props.load(is);
-                return props.getProperty(dependencyNameAsKey);
-            } else {
-                return null;
-            }
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-
-    static public void checkForVersionEquality(Context context, Class<?> dependerClass, Class<?> dependencyClass, String dependerName, String dependencyName) {
-        // the depender depends on the dependency
-        String dependerVersion = nonNull(getVersionOfArtifact(dependerClass));
-        String dependencyVersion = nonNull(getVersionOfArtifact(dependencyClass));
-
-        checkForVersionEquality(context, dependerVersion, dependencyVersion, dependerName, dependencyName);
-    }
-
-    static public void checkForVersionEquality(Context context, Class<?> dependerClass, String dependencyVersion, String dependerName, String dependencyName) {
-        String dependerVersion = nonNull(getVersionOfArtifact(dependerClass));
-        checkForVersionEquality(context, dependerVersion, dependencyVersion, dependerName, dependencyName);
-    }
+//    static public void checkForVersionEquality(Context context, Class<?> dependerClass, Class<?> dependencyClass, String dependerName, String dependencyName) {
+//        // the depender depends on the dependency
+//        String dependerVersion = nonNull(getVersionOfArtifact(dependerClass));
+//        String dependencyVersion = nonNull(getVersionOfArtifact(dependencyClass));
+//
+//        checkForVersionEquality(context, dependerVersion, dependencyVersion, dependerName, dependencyName);
+//    }
+//
+//    static public void checkForVersionEquality(Context context, Class<?> dependerClass, String dependencyVersion, String dependerName, String dependencyName) {
+//        String dependerVersion = nonNull(getVersionOfArtifact(dependerClass));
+//        checkForVersionEquality(context, dependerVersion, dependencyVersion, dependerName, dependencyName);
+//    }
 
 
     /**
@@ -190,12 +154,12 @@ public class VersionUtil {
     }
 
 
-    private static void addFoundVersionStatus(Context context, String name, String version) {
+    protected static void addFoundVersionStatus(Context context, String name, String version) {
         String foundDependent = String.format("Found %s version %s", name, nonNull(version));
         context.getStatusManager().add(new InfoStatus(foundDependent, context));
     }
 
-    private static String nameToPropertiesFilename(String name) {
+    protected static String nameToPropertiesFilename(String name) {
         return name + "-dependencies.properties";
     }
 
@@ -206,16 +170,19 @@ public class VersionUtil {
      * <p>Note: This method is used be logback-access-jetty11/12 and logback-access-tomcat.</p>
      *
      */
-    static public void compareExpectedAndFoundVersion(Context context, String actualDependencyVersion, Class<?> dependerClass, String dependerVersion,
+    public void compareExpectedAndFoundVersion(String actualDependencyVersion, Class<?> dependerClass, String dependerVersion,
                                                       String dependerName, String dependencyName) {
 
-        String expectedDependencyVersion = nonNull(getExpectedVersionOfDependencyByProperties(dependerClass, nameToPropertiesFilename(dependerName), dependencyName));
+        String propertiesFileName = nameToPropertiesFilename(dependerName);
+
+        String expectedDependencyVersion = this.getExpectedVersionOfDependencyByProperties(dependerClass, propertiesFileName, dependencyName);
+        String safeExpectedDependencyVersion = nonNull(expectedDependencyVersion);
 
         addFoundVersionStatus(context, dependencyName, actualDependencyVersion);
         addFoundVersionStatus(context, dependerName, dependerVersion);
 
-        if (!expectedDependencyVersion.equals(actualDependencyVersion)) {
-            String discrepancyMsg = String.format("Expected version of %s is %s but found %s", dependencyName, expectedDependencyVersion, actualDependencyVersion);
+        if (!safeExpectedDependencyVersion.equals(actualDependencyVersion)) {
+            String discrepancyMsg = String.format("For %s, expected version %s but found %s", dependencyName, safeExpectedDependencyVersion, actualDependencyVersion);
             context.getStatusManager().add(new WarnStatus(discrepancyMsg, context));
         }
     }

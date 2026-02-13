@@ -16,12 +16,21 @@ package ch.qos.logback.core.util;
 
 import ch.qos.logback.core.CoreConstants;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Utility class for retrieving version information of the "logback-core" module.
  *
  * @since 1.5.26
  */
 public class CoreVersionUtil {
+
+    static String CORE_MODULE_NAME = "logback-core";
+    static String CORE_MODULE_VERSION_PROPERTIES_FILE = CORE_MODULE_NAME + "-version.properties";
+    static String CORE_MODULE_VERSION_PROPERTY_KEY = CORE_MODULE_NAME + "-version";
+
     /**
      * Retrieves the version of the "logback-core" module using a properties file
      * associated with the module.
@@ -35,6 +44,17 @@ public class CoreVersionUtil {
      * @since 1.5.26
      */
     static public String getCoreVersionBySelfDeclaredProperties() {
-        return VersionUtil.getArtifactVersionBySelfDeclaredProperties(CoreConstants.class, "logback-core");
+        Properties props = new Properties();
+
+        try (InputStream is = CoreConstants.class.getResourceAsStream(CORE_MODULE_VERSION_PROPERTIES_FILE)) {
+            if (is != null) {
+                props.load(is);
+                return props.getProperty(CORE_MODULE_VERSION_PROPERTY_KEY);
+            } else {
+                return null;
+            }
+        } catch (IOException e) {
+            return null;
+        }
     }
 }
