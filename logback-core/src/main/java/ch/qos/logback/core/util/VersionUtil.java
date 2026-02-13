@@ -119,20 +119,6 @@ public class VersionUtil {
     }
 
 
-//    static public void checkForVersionEquality(Context context, Class<?> dependerClass, Class<?> dependencyClass, String dependerName, String dependencyName) {
-//        // the depender depends on the dependency
-//        String dependerVersion = nonNull(getVersionOfArtifact(dependerClass));
-//        String dependencyVersion = nonNull(getVersionOfArtifact(dependencyClass));
-//
-//        checkForVersionEquality(context, dependerVersion, dependencyVersion, dependerName, dependencyName);
-//    }
-//
-//    static public void checkForVersionEquality(Context context, Class<?> dependerClass, String dependencyVersion, String dependerName, String dependencyName) {
-//        String dependerVersion = nonNull(getVersionOfArtifact(dependerClass));
-//        checkForVersionEquality(context, dependerVersion, dependencyVersion, dependerName, dependencyName);
-//    }
-
-
     /**
      * Compares the versions of a depender and a dependency to determine if they are equal.
      * Updates the context's status manager with version information and logs a warning
