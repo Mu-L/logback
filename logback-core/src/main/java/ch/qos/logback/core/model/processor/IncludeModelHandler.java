@@ -62,6 +62,8 @@ public class IncludeModelHandler extends ResourceHandlerBase {
     public void handle(ModelInterpretationContext mic, Model model) throws ModelHandlerException {
         IncludeModel includeModel = (IncludeModel) model;
 
+        System.out.println("==============================IncludeModelHandler.handle");
+
         URL topURL = mic.getTopURL();
         Boolean topScan = mic.getTopScanBoolean();
         Model modelFromIncludedFile = buildModelFromIncludedFile(mic, topURL, topScan, includeModel);
@@ -96,14 +98,15 @@ public class IncludeModelHandler extends ResourceHandlerBase {
             return null;
         }
 
+        // allow for the creation of the URL at a later time
+        // updateConfigurationWatchList should be invoked before attempting to open the URL
+        updateConfigurationWatchList(inputURL, topURL, topScan);
+
         InputStream in = openURL(inputURL);
         if (in == null) {
             inError = true;
             return null;
         }
-
-        updateConfigurationWatchList(inputURL, topURL, topScan);
-
 
         SaxEventRecorder recorder = null;
 
@@ -146,7 +149,6 @@ public class IncludeModelHandler extends ResourceHandlerBase {
     }
 
     private void updateConfigurationWatchList(URL inputURL, URL topURL, Boolean topScan) throws ModelHandlerException {
-
         if(topScan == Boolean.TRUE) {
             if(topURL != null) {
                 ConfigurationWatchListUtil.addToWatchList(context, inputURL);

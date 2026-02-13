@@ -18,32 +18,32 @@ import ch.qos.logback.classic.joran.ReconfigureOnChangeTask;
 import ch.qos.logback.core.spi.ConfigurationEvent;
 import ch.qos.logback.core.spi.ConfigurationEventListener;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 class ReconfigurationDoneListener implements ConfigurationEventListener {
     CountDownLatch countDownLatch;
 
-    ReconfigureOnChangeTask roct;
+    //ReconfigureOnChangeTask roct;
 
-    ReconfigurationDoneListener(CountDownLatch countDownLatch,  ReconfigureOnChangeTask aRoct) {
+    ReconfigurationDoneListener(CountDownLatch countDownLatch) {
         this.countDownLatch = countDownLatch;
-        this.roct = aRoct;
+        //this.roct = aRoct;
     }
 
     @Override
     public void listen(ConfigurationEvent configurationEvent) {
-        switch (configurationEvent.getEventType()) {
-            case CONFIGURATION_ENDED_SUCCESSFULLY:
-            if(roct == null) {
-                countDownLatch.countDown();
-            } else {
-                Object data = configurationEvent.getData();
-                if(data instanceof ReconfigureOnChangeTask && roct == data) {
-                    countDownLatch.countDown();
-                }
-            }
-            break;
-        default:
+        if (configurationEvent.getEventType() == ConfigurationEvent.EventType.CONFIGURATION_ENDED_SUCCESSFULLY) {
+            countDownLatch.countDown();
+
+//            if (roct == null) {
+//                countDownLatch.countDown();
+//            } else {
+//                Object data = configurationEvent.getData();
+//                if (data instanceof ReconfigureOnChangeTask && roct == data) {
+//                    countDownLatch.countDown();
+//                }
+//            }
         }
 
     }

@@ -33,11 +33,12 @@ import ch.qos.logback.core.status.WarnStatus;
 import ch.qos.logback.core.testUtil.CoreTestConstants;
 import ch.qos.logback.core.testUtil.FileTestUtil;
 import ch.qos.logback.core.testUtil.RandomUtil;
-import ch.qos.logback.core.util.StatusPrinter;
+import ch.qos.logback.core.util.Loader;
 import ch.qos.logback.core.util.StatusPrinter2;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -70,6 +71,8 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
 
     private static final String SCAN_PERIOD_DEFAULT_FILE_AS_STR = JORAN_INPUT_PREFIX + "roct/scan_period_default.xml";
 
+    private static final String TOP_FILE_WITH_INCLUSION = "asResource/topWithFileInclusion.xml";
+
     Logger logger = loggerContext.getLogger(this.getClass());
     StatusChecker statusChecker = new StatusChecker(loggerContext);
     StatusPrinter2 statusPrinter2 = new StatusPrinter2();
@@ -89,6 +92,14 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         JoranConfigurator jc = new JoranConfigurator();
         jc.setContext(loggerContext);
         jc.doConfigure(file);
+    }
+
+    void configureAsResource(String filename) throws JoranException {
+        URL url = Loader.getResource(filename, this.getClass().getClassLoader());
+        assertNotNull(url);
+        JoranConfigurator jc = new JoranConfigurator();
+        jc.setContext(loggerContext);
+        jc.doConfigure(url);
     }
 
     @Test
@@ -129,6 +140,7 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         checkThatTaskHasRan();
         checkThatTaskCanBeStopped();
     }
+
 
     @Test
     @Timeout(value = TIMEOUT, unit = TimeUnit.SECONDS)
@@ -256,7 +268,7 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
 
     private void addResetResistantOnConsoleStatusListener() {
         // enable when debugging
-        if(1==1)
+        if(1!=1)
             return;
         OnConsoleStatusListener ocs = new OnConsoleStatusListener();
         ocs.setContext(loggerContext);
@@ -264,6 +276,43 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         ocs.start();
         loggerContext.getStatusManager().add(ocs);
     }
+
+    @Test
+    @Timeout(value = 2, unit = TimeUnit.SECONDS)
+    public void XXXscanWithIncludedFileCreatedLater() throws IOException, JoranException, InterruptedException {
+        ReconfigurationTaskRegisteredConfigEventListener roctRegisteredListener = new ReconfigurationTaskRegisteredConfigEventListener();
+        loggerContext.addConfigurationEventListener(roctRegisteredListener);
+        addResetResistantOnConsoleStatusListener();
+        String innerFileAsStr = CoreTestConstants.OUTPUT_DIR_PREFIX + "scanWithIncludedFileCreatedLater-" + diff + ".xml";
+        System.setProperty("fileCreatedLater", innerFileAsStr);
+        configureAsResource(TOP_FILE_WITH_INCLUSION);
+
+        File innerFile = new File(innerFileAsStr);
+
+        List<File> fileList = getConfigurationWatchList(loggerContext);
+        assertThatListContainsFile(fileList, innerFile);
+
+        // capture reference to ReconfigureOnChangeTask
+        //ReconfigureOnChangeTask roct = roctRegisteredListener.reconfigureOnChangeTask;
+        //assertNotNull(roct);
+
+        CountDownLatch changeDetectedLatch = registerChangeDetectedListener();
+        CountDownLatch configurationDoneLatch = registerNewReconfigurationDoneSuccessfullyListener();
+
+
+        writeToFile(innerFile, "<included><root level=\"ERROR\"/></included> ");
+        changeDetectedLatch.await();
+        configurationDoneLatch.await();
+
+        //Thread.sleep(1000);
+        //waitForReconfigureOnChangeTaskToRun();
+
+        //statusPrinter2.print(loggerContext);
+        Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+        assertEquals(Level.ERROR, root.getLevel());
+
+    }
+
 
     @Test
     @Timeout(value = TIMEOUT_LONG, unit = TimeUnit.SECONDS)
@@ -278,16 +327,11 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         writeToFile(innerFile, "<included><root level=\"ERROR\"/></included> ");
         addResetResistantOnConsoleStatusListener();
 
-        ReconfigurationTaskRegisteredConfigEventListener roctRegisteredListener = new ReconfigurationTaskRegisteredConfigEventListener();
-        loggerContext.addConfigurationEventListener(roctRegisteredListener);
-
         configure(topLevelFile);
-
-        ReconfigureOnChangeTask roct = roctRegisteredListener.reconfigureOnChangeTask;
 
 
         CountDownLatch changeDetectedLatch = registerChangeDetectedListener();
-        CountDownLatch configurationDoneLatch = registerNewReconfigurationDoneSuccessfullyListener(roct);
+        CountDownLatch configurationDoneLatch = registerNewReconfigurationDoneSuccessfullyListener();
 
         writeToFile(innerFile, "<included>\n<root>\n</included>");
         changeDetectedLatch.await();
@@ -298,7 +342,7 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
         statusChecker.assertContainsMatch(Status.WARN, FALLING_BACK_TO_SAFE_CONFIGURATION);
         statusChecker.assertContainsMatch(Status.INFO, RE_REGISTERING_PREVIOUS_SAFE_CONFIGURATION);
 
-        //statusPrinter2.print(loggerContext);
+        statusPrinter2.print(loggerContext);
 
         loggerContext.getStatusManager().clear();
 
@@ -312,17 +356,13 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
     }
 
     CountDownLatch registerNewReconfigurationDoneSuccessfullyListener() {
-        return registerNewReconfigurationDoneSuccessfullyListener(null);
-    }
-
-    CountDownLatch registerNewReconfigurationDoneSuccessfullyListener(ReconfigureOnChangeTask roct) {
         CountDownLatch latch = new CountDownLatch(1);
-        ReconfigurationDoneListener reconfigurationDoneListener = new ReconfigurationDoneListener(latch, roct);
+        ReconfigurationDoneListener reconfigurationDoneListener = new ReconfigurationDoneListener(latch);
         loggerContext.addConfigurationEventListener(reconfigurationDoneListener);
         return latch;
     }
 
-    class RunMethodInvokedListener implements ConfigurationEventListener {
+    static class RunMethodInvokedListener implements ConfigurationEventListener {
         CountDownLatch countDownLatch;
         ReconfigureOnChangeTask reconfigureOnChangeTask;
 
@@ -332,15 +372,12 @@ public class ReconfigureOnChangeTaskTest extends ReconfigureTaskTestSupport {
 
         @Override
         public void listen(ConfigurationEvent configurationEvent) {
-            switch (configurationEvent.getEventType()) {
-            case CHANGE_DETECTOR_RUNNING:
+            if (configurationEvent.getEventType() == ConfigurationEvent.EventType.CHANGE_DETECTOR_RUNNING) {
                 countDownLatch.countDown();
                 Object data = configurationEvent.getData();
                 if (data instanceof ReconfigureOnChangeTask) {
                     reconfigureOnChangeTask = (ReconfigureOnChangeTask) data;
                 }
-                break;
-            default:
             }
         }
     }
