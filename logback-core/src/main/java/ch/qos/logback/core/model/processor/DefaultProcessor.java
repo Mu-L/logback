@@ -237,7 +237,6 @@ public class DefaultProcessor extends ContextAwareBase {
         try {
 
             boolean allDependenciesStarted = allDependenciesStarted(model);
-
             ModelHandlerBase handler = null;
             if (model.isUnhandled() && allDependenciesStarted) {
                 handler = createHandler(model);
@@ -248,7 +247,7 @@ public class DefaultProcessor extends ContextAwareBase {
                 }
             }
 
-            if (!allDependenciesStarted && !dependencyIsADirectSubmodel(model)) {
+            if (!allDependenciesStarted && !dependencyIsLocatedInASubmodel(model)) {
                 return count;
             }
 
@@ -266,19 +265,29 @@ public class DefaultProcessor extends ContextAwareBase {
         return count;
     }
 
-    private boolean dependencyIsADirectSubmodel(Model model) {
-        List<String> dependecyNames = this.mic.getDependencyNamesForModel(model);
-        if (dependecyNames == null || dependecyNames.isEmpty()) {
+    private boolean dependencyIsLocatedInASubmodel(Model model) {
+        List<String> dependencyNames = this.mic.getDependencyNamesForModel(model);
+        if (dependencyNames == null || dependencyNames.isEmpty()) {
             return false;
         }
-        for (Model submodel : model.getSubModels()) {
-            if (submodel instanceof NamedComponentModel) {
-                NamedComponentModel namedComponentModel = (NamedComponentModel) submodel;
-                String subModelName = namedComponentModel.getName();
-                if (dependecyNames.contains(subModelName)) {
-                    return true;
-                }
+
+        return recursiveIsDependencyPredicate(dependencyNames, model);
+    }
+
+    private boolean recursiveIsDependencyPredicate(List<String> dependencyNames, Model model) {
+
+        if (model instanceof NamedComponentModel) {
+            NamedComponentModel namedComponentModel = (NamedComponentModel) model;
+            String modelName = namedComponentModel.getName();
+            if (dependencyNames.contains(modelName)) {
+                return true;
             }
+        }
+
+        for(Model submodel : model.getSubModels()) {
+            boolean result = recursiveIsDependencyPredicate(dependencyNames, submodel);
+            if(result)
+                return true;
         }
 
         return false;

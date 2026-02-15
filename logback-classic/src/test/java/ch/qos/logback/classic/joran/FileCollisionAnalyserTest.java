@@ -110,7 +110,6 @@ public class FileCollisionAnalyserTest {
         Appender<ILoggingEvent> fileAppender2 = aLogger.getAppender("FILE2");
         assertNull(fileAppender2);
 
-        //statusPrinter2.print(loggerContext);
 
         String expectationPattern = COLLISION_MESSAGE.replace("[", "\\[").replace("]", "\\]");
 

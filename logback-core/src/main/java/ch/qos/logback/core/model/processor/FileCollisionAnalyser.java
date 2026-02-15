@@ -84,16 +84,14 @@ public class FileCollisionAnalyser extends ModelHandlerBase {
 
         List<Model> matchingModels = Stream.concat(streamLevel1, streamLevel2).filter(m -> tagPredicate(m, tagName)).collect(Collectors.toList());
 
-        //List<Model> matchingModels = appenderModel.getSubModels().stream().filter(m -> tagPredicate(m, tagName)).collect(Collectors.toList());
-
         if(!matchingModels.isEmpty()) {
             ImplicitModel implicitModel = (ImplicitModel) matchingModels.get(0);
             String bodyValue = mic.subst(implicitModel.getBodyText());
 
 
-            Map<String, String> faileCollisionMap = getCollisionMapByKey(mic, mapKey);
+            Map<String, String> collisionMap = getCollisionMapByKey(mic, mapKey);
 
-            Optional<Map.Entry<String, String>> collision = faileCollisionMap.entrySet()
+            Optional<Map.Entry<String, String>> collision = collisionMap.entrySet()
                     .stream()
                     .filter(entry -> bodyValue.equals(entry.getValue()))
                     .findFirst();
@@ -105,7 +103,7 @@ public class FileCollisionAnalyser extends ModelHandlerBase {
             } else {
                 // add to collision map if and only if no collision detected
                 // reasoning: single entry is as effective as multiple entries for collision detection
-                faileCollisionMap.put(appenderName, bodyValue);
+                collisionMap.put(appenderName, bodyValue);
             }
         }
     }
