@@ -207,6 +207,21 @@ public class BlackboxJoranConfiguratorTest {
         }
     }
 
+    @Test
+    public void includedAppender() throws JoranException {
+        String configFileAsStr = BlackboxClassicTestConstants.JORAN_INPUT_PREFIX + "incl/topAppender.xml";
+        configure(configFileAsStr);
+
+        ListAppender<?> listAppender = (ListAppender<?>) root.getAppender("LIST");
+        assertNotNull(listAppender);
+
+        logger.debug("includedAppender");
+
+        assertEquals(1, listAppender.list.size());
+        assertEquals(Level.TRACE, root.getLevel());
+
+    }
+
     // See https://github.com/qos-ch/logback/issues/1001
     // See https://github.com/qos-ch/logback/issues/997
     @Test

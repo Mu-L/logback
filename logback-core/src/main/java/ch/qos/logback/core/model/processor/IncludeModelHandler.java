@@ -106,6 +106,8 @@ public class IncludeModelHandler extends ResourceHandlerBase {
             return null;
         }
 
+        addInfo("Including configuration file [" + inputURL + "]");
+
         SaxEventRecorder recorder = null;
 
         try {
