@@ -26,23 +26,30 @@ abstract public class Converter<E> {
 
     /**
      * The convert method is responsible for extracting data from the event and
-     * storing it for later use by the write method.
+     * returning a formatted string representation.
      * 
      * @param event the event to convert
+     * @return the formatted string representation
      */
     public abstract String convert(E event);
 
     /**
-     * In its simplest incarnation, a convert simply appends the data extracted from
-     * the event to the buffer passed as parameter.
-     * 
-     * @param buf   The input buffer where data is appended
+     * Formats the event by calling convert() and appends the resulting string to the provided buffer.
+     *
+     * @param buf The input buffer where data is appended
      * @param event The event from where data is extracted
      */
     public void write(StringBuilder buf, E event) {
         buf.append(convert(event));
     }
 
+    /**
+     * Sets the next converter in the chain.
+     * This method can only be called once per converter instance.
+     * 
+     * @param next the next converter to chain
+     * @throws IllegalStateException if next has already been set
+     */
     public final void setNext(Converter<E> next) {
         if (this.next != null) {
             throw new IllegalStateException("Next converter has been already set");
@@ -50,6 +57,11 @@ abstract public class Converter<E> {
         this.next = next;
     }
 
+    /**
+     * Gets the next converter in the chain.
+     * 
+     * @return the next converter, or null if not set
+     */
     public final Converter<E> getNext() {
         return next;
     }
